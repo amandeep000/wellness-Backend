@@ -3,6 +3,7 @@ import { ApiResponse } from "../utils/ApiResponse.utils.js";
 import { ApiError } from "../utils/ApiError.utils.js";
 import { User } from "../models/user.models.js";
 import jwt from "jsonwebtoken";
+import { uploadCloudinary } from "../utils/Cloudinary.utils.js";
 
 const createAccessAndRefreshToken = AsyncHandler(async (userId) => {
   const user = await User.findById(userId);
@@ -231,10 +232,48 @@ const updateProfile = AsyncHandler(async (req, res) => {
       )
     );
 });
+const updateAvatar = AsyncHandler(async (req, res) => {
+  const avatarFilePath = req.file?.path;
+  if (!avatarFilePath) {
+    throw new ApiError(400, "Image file is required to update avatar");
+  }
+  const avatar = await uploadCloudinary(avatarFilePath, "Avatar");
+  if (!avatar.secure_url) {
+    throw new ApiError(
+      500,
+      "Avatar file upload failed to cloudinary.Try again later"
+    );
+  }
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        avatar: avatar.secure_url,
+      },
+    },
+    { new: true }
+  ).select("-password -refreshToken");
+  res
+    .status(200)
+    .json({ status: 200, user, message: "Userprofile updated successfully" });
+});
+const getCurrentUser = AsyncHandler(async (req, res) => {
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { currentUser: req.user._id },
+        "Current user details"
+      )
+    );
+});
 export {
   registerUser,
   loginUser,
   logoutUser,
   createNewAccessAndRefreshToken,
   updateProfile,
+  updateAvatar,
+  getCurrentUser,
 };

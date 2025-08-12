@@ -34,7 +34,7 @@ const uploadCloudinary = async (localFilePath, foldername) => {
     const response = await cloudinary.uploader.upload(localFilePath, options);
     deleteLocalFile(localFilePath);
 
-    if (!response?.url || !response?.public_id) {
+    if (!response?.secure_url || !response?.public_id) {
       console.error("upload response is invalid: ", response);
       return null;
     }
