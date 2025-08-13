@@ -52,7 +52,7 @@ const userSchema = new mongoose.Schema(
       {
         type: {
           type: String,
-          enum: ["billing", "shipping"],
+          enum: ["billing", "shipping", "both"],
           default: "shipping",
         },
         fullname: { type: String, required: true },
@@ -109,4 +109,4 @@ userSchema.methods.generateRefreshToken = async function () {
   });
 };
 
-export const User = mongoose.model("user", userSchema);
+export const User = mongoose.model("User", userSchema);
