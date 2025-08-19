@@ -4,6 +4,8 @@ import { ApiError } from "../utils/ApiError.utils.js";
 import { User } from "../models/user.models.js";
 import jwt from "jsonwebtoken";
 import { uploadCloudinary } from "../utils/Cloudinary.utils.js";
+import nodemailer from "nodemailer";
+import crypto from "node:crypto";
 
 const createAccessAndRefreshToken = AsyncHandler(async (userId) => {
   const user = await User.findById(userId);
@@ -258,16 +260,57 @@ const updateAvatar = AsyncHandler(async (req, res) => {
     .json({ status: 200, user, message: "Userprofile updated successfully" });
 });
 const getCurrentUser = AsyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).select(
+    "-password -refreshToken"
+  );
+  if (!user) {
+    throw new ApiError(404, "user not found.Try Log in.");
+  }
+
   res
     .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        { currentUser: req.user._id },
-        "Current user details"
-      )
-    );
+    .json(new ApiResponse(200, { currentUser: user }, "Current user details"));
 });
+// forget password
+// const forgetPassword = AsyncHandler(async (req, res) => {
+//   const { email } = req.body;
+//   if (!email) {
+//     throw new ApiError(404, "Email not found.Please provide an valid email.");
+//   }
+//   const checkUser = await User.findOne({ email });
+//   if (!checkUser) {
+//     throw new ApiError(404, "User not found.Try signup");
+//   }
+//   try {
+//    const resetToken = crypto.randomBytes(32).toString('hex')
+//    const hashedToken = crypto.createHash("sha256")
+//     const transporter = nodemailer.createTransport({
+//       service: "gmail",
+//       secure: true,
+//       auth: {
+//         user: process.env.GMAIL,
+//         pass: process.env.GMAIL_PASSWORD,
+//       },
+//     });
+//     const receiver = {
+//       from: process.env.GMAIL,
+//       to: email,
+//       subject: "Password reset Request",
+//       text: `Click here in the link to generate new passwor ${process.env.CLIENT_URL}/reset-password/${token}`,
+//     };
+//     await transporter.sendMail(receiver);
+//     res
+//       .status(200)
+//       .json(
+//         new ApiResponse(
+//           200,
+//           "Password reset link sent successffully on your gmail account"
+//         )
+//       );
+//   } catch (error) {
+//     throw new ApiError(500, "failed to generate password reset link");
+//   }
+// });
 export {
   registerUser,
   loginUser,

@@ -2,7 +2,7 @@ import { User } from "../models/user.models.js";
 import { ApiError } from "../utils/ApiError.utils.js";
 import { ApiResponse } from "../utils/ApiResponse.utils.js";
 import verifyJWT from "../middlewares/auth.middlewares.js";
-import { AsyncHandler } from "../utils/AsyncHandler";
+import { AsyncHandler } from "../utils/AsyncHandler.js";
 
 const addAddress = AsyncHandler(async (req, res) => {
   const {
