@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import { mongodb_database } from "../constants.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 const dbConnect = async () => {
   try {
