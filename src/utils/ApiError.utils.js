@@ -20,3 +20,4 @@ class ApiError extends Error {
 }
 
 export { ApiError };
+// this is for having an consistent error patterns
