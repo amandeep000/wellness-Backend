@@ -9,16 +9,6 @@ const ROLES = {
 
 const userSchema = new mongoose.Schema(
   {
-    username: {
-      type: String,
-      required: [true, "username is required"],
-      trim: true,
-      lowercase: true,
-      minlength: [3, "username must be at least 3 characters"],
-      maxlength: [50, "username should not exceed 50 characters"],
-      index: true,
-      unique: true,
-    },
     email: {
       type: String,
       required: [true, "email is required"],

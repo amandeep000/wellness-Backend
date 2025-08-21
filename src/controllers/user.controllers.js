@@ -32,17 +32,17 @@ const registerUser = AsyncHandler(async (req, res) => {
     throw new ApiError(400, "Request body cannot be empty");
   }
 
-  const { username, fullname, email, password } = req.body;
+  const { fullname, email, password } = req.body;
 
-  if ([username, fullname, email, password].some((field) => !field?.trim())) {
+  if ([fullname, email, password].some((field) => !field?.trim())) {
     throw new ApiError(
       400,
-      "All the fields (username, email, fullname, password) are required"
+      "All the fields (email, fullname, password) are required"
     );
   }
 
   const existingUser = await User.findOne({
-    $or: [{ username }, { email }],
+    $or: [{ email }],
   });
 
   if (existingUser) {
@@ -51,7 +51,6 @@ const registerUser = AsyncHandler(async (req, res) => {
 
   try {
     const createUser = await User.create({
-      username: username.toLowerCase(),
       fullname,
       email,
       password,
