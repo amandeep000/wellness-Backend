@@ -49,30 +49,25 @@ const registerUser = AsyncHandler(async (req, res) => {
     throw new ApiError(409, "User already exists. Please login instead");
   }
 
-  try {
-    const createUser = await User.create({
-      fullname,
-      email,
-      password,
-    });
+  const createUser = await User.create({
+    fullname,
+    email,
+    password,
+  });
 
-    if (!createUser) {
-      throw new ApiError(
-        500,
-        "Failed to register user. Please try again later"
-      );
-    }
-
-    return res
-      .status(201)
-      .json(new ApiResponse(201, createUser, "User registered successfully!"));
-  } catch (error) {
-    console.error("Something went wrong while registering the user:", error);
-    throw new ApiError(
-      500,
-      "An unexpected error occurred while registering the user"
-    );
+  if (!createUser) {
+    throw new ApiError(500, "Failed to register user. Please try again later");
   }
+
+  const createdUser = {
+    id: createUser._id,
+    name: createUser.fullname,
+    email: createUser.email,
+  };
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, createdUser, "User registered successfully!"));
 });
 
 const loginUser = AsyncHandler(async (req, res) => {
