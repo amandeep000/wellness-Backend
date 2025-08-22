@@ -4,8 +4,6 @@ import { ApiError } from "../utils/ApiError.utils.js";
 import { User } from "../models/user.models.js";
 import jwt from "jsonwebtoken";
 import { uploadCloudinary } from "../utils/Cloudinary.utils.js";
-import nodemailer from "nodemailer";
-import crypto from "node:crypto";
 
 const createAccessAndRefreshToken = AsyncHandler(async (userId) => {
   const user = await User.findById(userId);
@@ -67,7 +65,13 @@ const registerUser = AsyncHandler(async (req, res) => {
 
   return res
     .status(201)
-    .json(new ApiResponse(201, createdUser, "User registered successfully!"));
+    .json(
+      new ApiResponse(
+        201,
+        { createdUser: createdUser },
+        "User registered successfully!"
+      )
+    );
 });
 
 const loginUser = AsyncHandler(async (req, res) => {
