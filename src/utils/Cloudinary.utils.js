@@ -22,17 +22,25 @@ const deleteLocalFile = (filePath) => {
 };
 
 // upload on cloudinary
-const uploadCloudinary = async (localFilePath, foldername) => {
+const uploadCloudinary = async (source, foldername, mimetype) => {
   try {
-    if (!localFilePath) {
-      console.log("No local file path provided for upload");
+    if (!source) {
+      console.log("No source provided for upload");
       return null;
     }
     const options = { resource_type: "auto" };
     if (foldername) options.folder = foldername;
 
-    const response = await cloudinary.uploader.upload(localFilePath, options);
-    deleteLocalFile(localFilePath);
+    let response;
+    if (Buffer.isBuffer(source)) {
+      response = await cloudinary.uploader.upload(
+        `data:${mimetype};base64,${source.toString("base64")}`,
+        options
+      );
+    } else {
+      response = await cloudinary.uploader.upload(source, options);
+      deleteLocalFile(source);
+    }
 
     if (!response?.secure_url || !response?.public_id) {
       console.error("upload response is invalid: ", response);
@@ -46,7 +54,9 @@ const uploadCloudinary = async (localFilePath, foldername) => {
     };
   } catch (error) {
     console.error("cloudinary upload failed", error);
-    deleteLocalFile(localFilePath);
+    if (typeof source === "string") {
+      deleteLocalFile(source);
+    }
     return null;
   }
 };
@@ -55,6 +65,7 @@ const deleteFromCloudinary = async (publicId) => {
   try {
     if (!publicId) {
       console.error("No public id provided for deletion");
+      return null;
     }
     const result = await cloudinary.uploader.destroy(publicId);
     if (result.result === "ok") {

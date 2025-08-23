@@ -241,7 +241,7 @@ const updateAvatar = AsyncHandler(async (req, res) => {
     "Avatar",
     req.file.mimetype
   );
-  if (!avatar.secure_url) {
+  if (!avatar?.secure_url) {
     throw new ApiError(
       500,
       "Avatar file upload failed to cloudinary.Try again later"
