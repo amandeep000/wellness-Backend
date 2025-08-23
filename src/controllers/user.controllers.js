@@ -233,11 +233,14 @@ const updateProfile = AsyncHandler(async (req, res) => {
     );
 });
 const updateAvatar = AsyncHandler(async (req, res) => {
-  const avatarFilePath = req.file?.path;
-  if (!avatarFilePath) {
+  if (!req.file) {
     throw new ApiError(400, "Image file is required to update avatar");
   }
-  const avatar = await uploadCloudinary(avatarFilePath, "Avatar");
+  const avatar = await uploadCloudinary(
+    req.file.buffer,
+    "Avatar",
+    req.file.mimetype
+  );
   if (!avatar.secure_url) {
     throw new ApiError(
       500,
