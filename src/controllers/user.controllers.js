@@ -194,7 +194,9 @@ const createNewAccessAndRefreshToken = AsyncHandler(async (req, res) => {
     );
 });
 const updateProfile = AsyncHandler(async (req, res) => {
+  console.log("incoming body", req.body);
   const userId = req.user._id;
+  console.log("this is user id from middleware: ", userId);
   const { fullname, email, oldPassword, newPassword } = req.body;
   if (!fullname && !email && !oldPassword && !newPassword) {
     throw new ApiError(
@@ -202,12 +204,13 @@ const updateProfile = AsyncHandler(async (req, res) => {
     );
   }
   const user = await User.findById(userId);
+  console.log("user found: ", user);
   if (!user) {
     throw new ApiError(404, "User not found");
   }
   if (fullname) user.fullname = fullname;
   if (email) user.email = email;
-
+  console.log("oldPassword and newPassword", oldPassword, newPassword);
   if (newPassword) {
     if (!oldPassword) {
       throw new ApiError(400, "Old password is required to set new one");
@@ -222,6 +225,7 @@ const updateProfile = AsyncHandler(async (req, res) => {
   const updatedUser = await User.findByIde(user._id).select(
     "-password -refreshToken"
   );
+  console.log("this is the updated user with new passowrd", updatedUser);
   res
     .status(200)
     .json(
