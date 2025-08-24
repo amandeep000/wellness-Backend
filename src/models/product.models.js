@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import Category from "./category.models.js";
 const productSchema = new mongoose.Schema(
   {
     name: {
@@ -20,6 +19,7 @@ const productSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    slug: { type: String, unique: true, lowercase: true },
     tags: [{ type: String }],
     bgColor: {
       type: String,
@@ -43,7 +43,7 @@ const productSchema = new mongoose.Schema(
     },
     ingredients: [{ type: String, required: true }],
     ingredientsDescription: [{ type: String, required: true }],
-    ingredientsImage: {
+    ingredientsVideo: {
       type: String,
       required: true,
     },
