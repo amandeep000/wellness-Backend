@@ -222,7 +222,7 @@ const updateProfile = AsyncHandler(async (req, res) => {
     user.password = newPassword;
   }
   await user.save();
-  const updatedUser = await User.findByIde(user._id).select(
+  const updatedUser = await User.findById(user._id).select(
     "-password -refreshToken"
   );
   console.log("this is the updated user with new passowrd", updatedUser);
