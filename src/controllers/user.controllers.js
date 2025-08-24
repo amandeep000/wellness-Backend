@@ -203,7 +203,7 @@ const updateProfile = AsyncHandler(async (req, res) => {
       "At least one field (fullname,email,password) must be provided to update"
     );
   }
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select("+password");
   console.log("user found: ", user);
   if (!user) {
     throw new ApiError(404, "User not found");
