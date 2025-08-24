@@ -13,7 +13,6 @@ router.use(verifyJWT);
 
 router.route("/").get(getAllAddresses).post(addAddress);
 
-s;
 router
   .route("/:addressId")
   .get(getAddressById)
