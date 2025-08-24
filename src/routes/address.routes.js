@@ -5,12 +5,19 @@ import {
   deleteAddress,
   getAllAddresses,
   updateAddress,
+  getAddressById,
 } from "../controllers/address.controllers.js";
 const router = Router();
 
 router.use(verifyJWT);
+
 router.route("/").get(getAllAddresses).post(addAddress);
-router.route("/:addressId").put(updateAddress);
-router.route("/:addressId").delete(deleteAddress);
+
+s;
+router
+  .route("/:addressId")
+  .get(getAddressById)
+  .put(updateAddress)
+  .delete(deleteAddress);
 
 export { router };

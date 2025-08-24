@@ -1,7 +1,6 @@
 import { User } from "../models/user.models.js";
 import { ApiError } from "../utils/ApiError.utils.js";
 import { ApiResponse } from "../utils/ApiResponse.utils.js";
-import verifyJWT from "../middlewares/auth.middlewares.js";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 
 const addAddress = AsyncHandler(async (req, res) => {
@@ -47,7 +46,7 @@ const addAddress = AsyncHandler(async (req, res) => {
     postalCode,
     country,
     phoneNumber,
-    isDefault,
+    isDefault: defaultFlag,
   });
   await user.save();
   res
@@ -68,14 +67,14 @@ const updateAddress = AsyncHandler(async (req, res) => {
     phoneNumber,
     isDefault,
   } = req.body;
-  const user = await User.findById(req.usre._id);
+  const user = await User.findById(req.user._id);
   if (!user) {
     throw new ApiError(404, "User not found!");
   }
   const address = user.addresses.id(addressId);
   if (!address) throw new ApiError(404, "Address not found");
 
-  if (type) address.type = type;
+  if (type !== undefined) address.type = type;
   if (fullname) address.fullname = fullname;
   if (street) address.street = street;
   if (city) address.city = city;
@@ -89,6 +88,18 @@ const updateAddress = AsyncHandler(async (req, res) => {
     address.isDefault = true;
   }
 
+  if (isDefault !== undefined && isDefault) {
+    user.addresses.forEach((addr) => (addr.isDefault = false));
+    address.isDefault = true;
+  } else if (isDefault !== undefined && !isDefault) {
+    if (address.isDefault && user.addresses.length > 1) {
+      address.isDefault = false;
+      const otherAddress = user.addresses.find(
+        (addr) => addr._id.toString() !== addressId
+      );
+      if (otherAddress) otherAddress.isDefault = true;
+    }
+  }
   await user.save();
   res
     .status(200)
@@ -103,6 +114,13 @@ const deleteAddress = AsyncHandler(async (req, res) => {
   }
   const address = user.addresses.id(addressId);
   if (!address) throw new ApiError(404, "Address not found");
+
+  if (user.addresses.length === 1) {
+    throw new ApiError(
+      400,
+      "Cannot delete the only address. Please add another address first."
+    );
+  }
 
   const wasDefault = address.isDefault;
   address.remove();
@@ -127,5 +145,24 @@ const getAllAddresses = AsyncHandler(async (req, res) => {
       new ApiResponse(200, user.addresses, "Addresses fetched successfully")
     );
 });
+const getAddressById = AsyncHandler(async (req, res) => {
+  const { addressId } = req.params;
 
-export { addAddress, updateAddress, deleteAddress, getAllAddresses };
+  const user = await User.findById(req.user._id);
+  if (!user) throw new ApiError(404, "User not found");
+
+  const address = user.addresses.id(addressId);
+  if (!address) throw new ApiError(404, "Address not found");
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, address, "Address fetched successfully"));
+});
+
+export {
+  addAddress,
+  updateAddress,
+  deleteAddress,
+  getAllAddresses,
+  getAddressById,
+};
