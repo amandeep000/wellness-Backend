@@ -5,6 +5,7 @@ import { errorHandler } from "./middlewares/error.middlewares.js";
 import { router as authRouter } from "./routes/auth.routes.js";
 import { router as userRouter } from "./routes/user.routes.js";
 import { router as addressRouter } from "./routes/address.routes.js";
+import { router as productRouter } from "./routes/product.routes.js";
 
 const app = express();
 app.use(
@@ -26,5 +27,6 @@ app.use(cookieParser());
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/addresses", addressRouter);
+app.use("/api/v1/products", productRouter);
 app.use(errorHandler);
 export default app;
