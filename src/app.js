@@ -6,6 +6,7 @@ import { router as authRouter } from "./routes/auth.routes.js";
 import { router as userRouter } from "./routes/user.routes.js";
 import { router as addressRouter } from "./routes/address.routes.js";
 import { router as productRouter } from "./routes/product.routes.js";
+import { router as cartRouter } from "./routes/cart.routes.js";
 
 const app = express();
 app.use(
@@ -28,5 +29,6 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/addresses", addressRouter);
 app.use("/api/v1/products", productRouter);
+app.use("/app/v1/cart", cartRouter);
 app.use(errorHandler);
 export default app;

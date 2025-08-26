@@ -54,11 +54,27 @@ const getAllProducts = AsyncHandler(async (req, res) => {
 });
 const getProductsByCategory = AsyncHandler(async (req, res) => {
   const categorySlug = req.params.categorySlug;
-  const category = Category.findOne({ slug: categorySlug });
+  const category = await Category.findOne({ slug: categorySlug });
   if (!category) {
     throw new ApiError(400, `Category with slug ${categorySlug} Not Found!`);
   }
-  const categoryProducts = await Product.find({ category: category._id });
+  const categoryProducts = await Product.find({
+    category: category._id,
+  })
+    .populate("category", "name slug")
+    .select("name slug price images category");
+
+  console.log(`Found ${categoryProducts.length} prdocus in category`);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        categoryProducts,
+        `${categoryProducts.length} products found in ${category.name} category`
+      )
+    );
 });
 
 const getAllProductsWithPagination = AsyncHandler(async (req, res) => {
