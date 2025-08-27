@@ -297,8 +297,6 @@ const createPaymentIntent = AsyncHandler(async (req, res) => {
   );
 });
 
-export { createPaymentIntent, createOrderFromCart };
-
 const getUserOrders = AsyncHandler(async (req, res) => {
   const userId = req.user._id;
   const userOrders = await Order.find({ customer: userId })
