@@ -7,24 +7,25 @@ import { AsyncHandler } from "../utils/AsyncHandler.js";
 
 // get product from slug, access is public not protected
 const getProductBySlug = AsyncHandler(async (req, res) => {
-  const categorySlug = req.params.slug;
-  console.log("the product slug: ", categorySlug);
+  let productSlug = req.params.slug;
+  console.log("The product slug (received):", productSlug);
 
-  if (!categorySlug || categorySlug.trim() === "") {
+  if (!productSlug || productSlug.trim() === "") {
     throw new ApiError(400, "Product slug is required");
   }
-  const category = await Category.findOne({ slug: categorySlug });
-  if (!category) {
-    throw new ApiError(404, `Category with slug ${categorySlug} not found`);
-  }
+
+  // Normalize slug to lowercase to match DB storage
+  productSlug = productSlug.toLowerCase();
+
   const productWithCategory = await Product.findOne({
-    category: category._id,
+    slug: productSlug,
   }).populate("category", "name");
+  console.log("Product fetched from DB:", productWithCategory);
 
   if (!productWithCategory) {
-    throw new ApiError(404, `Product with ${categorySlug} slug not found`);
+    throw new ApiError(404, `Product with slug '${productSlug}' not found`);
   }
-  console.log("product with category: ", productWithCategory.category?.name);
+  console.log("Product category name:", productWithCategory.category?.name);
 
   const reviews = await Review.find({
     product: productWithCategory._id,
@@ -32,7 +33,7 @@ const getProductBySlug = AsyncHandler(async (req, res) => {
 
   const productData = {
     ...productWithCategory.toObject(),
-    reviews: reviews,
+    reviews,
   };
 
   return res
@@ -41,6 +42,7 @@ const getProductBySlug = AsyncHandler(async (req, res) => {
       new ApiResponse(200, productData, "Product with category and reviews")
     );
 });
+
 const getAllProducts = AsyncHandler(async (req, res) => {
   const allProducts = await Product.find()
     .populate("category", "name")
