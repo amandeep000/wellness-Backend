@@ -31,6 +31,6 @@ app.use("/api/v1/user", userRouter);
 app.use("/api/v1/addresses", addressRouter);
 app.use("/api/v1/products", productRouter);
 app.use("/app/v1/cart", cartRouter);
-app.use("/api/v1/orders", orderRouter);
+// app.use("/api/v1/orders", orderRouter);
 app.use(errorHandler);
 export default app;
