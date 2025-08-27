@@ -1,5 +1,4 @@
-import mongoose from "mongoose";
-
+// models/order.models.js
 const orderSchema = new mongoose.Schema(
   {
     customer: {
@@ -14,48 +13,61 @@ const orderSchema = new mongoose.Schema(
         required: true,
       },
     ],
+
+    // ✅ SHIPPING ADDRESS FROM STRIPE
     shippingAddress: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
+      fullname: { type: String, required: true },
+      email: { type: String, required: true },
+      street: { type: String, required: true },
+      city: { type: String, required: true },
+      state: { type: String },
+      postalCode: { type: String, required: true },
+      country: { type: String, required: true },
+      phoneNumber: { type: String },
     },
-    paymentStatus: {
+
+    // ✅ BILLING ADDRESS FROM STRIPE
+    billingAddress: {
+      name: String,
+      email: String,
+      phone: String,
+      address: {
+        line1: String,
+        line2: String,
+        city: String,
+        state: String,
+        postal_code: String,
+        country: String,
+      },
+    },
+
+    // ✅ STRIPE PAYMENT DATA
+    stripePaymentIntentId: { type: String, required: true, unique: true },
+    paymentStatus: { type: String, required: true }, // From Stripe
+    paymentMethod: { type: String, required: true }, // From Stripe
+    paymentMethodDetails: {
       type: String,
-      required: true,
+      card: {
+        brand: String,
+        last4: String,
+        exp_month: Number,
+        exp_year: Number,
+        country: String,
+        funding: String,
+      },
     },
-    paymentMethod: {
-      type: String,
-      required: true,
-    },
-    taxPrice: {
-      type: Number,
-      default: 0.0,
-      required: true,
-    },
-    shippingPrice: {
-      type: Number,
-      default: 0.0,
-      required: true,
-    },
-    totalPrice: {
-      type: Number,
-      required: true,
-      default: 0.0,
-    },
+
+    taxPrice: { type: Number, default: 0.0, required: true },
+    shippingPrice: { type: Number, default: 0.0, required: true },
+    totalPrice: { type: Number, required: true },
     orderStatus: {
       type: String,
       enum: ["pending", "processing", "shipping", "delivered", "cancelled"],
       default: "pending",
     },
-    isPaid: {
-      type: Boolean,
-      default: false,
-    },
+    isPaid: { type: Boolean, default: false },
     paidAt: Date,
     deliveredAt: Date,
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
-const Order = mongoose.model("Order", orderSchema);
-export default Order;
