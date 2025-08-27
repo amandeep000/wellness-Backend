@@ -373,4 +373,4 @@ const updateOrderStatus = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, order, "Order status updated successfully"));
 });
 
-export { createOrderFromCart, getUserOrders, getOrderById, updateOrderStatus };
+// export { createOrderFromCart, getUserOrders, getOrderById, updateOrderStatus };
