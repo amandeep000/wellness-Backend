@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 // models/order.models.js
 const orderSchema = new mongoose.Schema(
   {
@@ -71,3 +73,6 @@ const orderSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+const Order = mongoose.model("Order", orderSchema);
+export default Order;
