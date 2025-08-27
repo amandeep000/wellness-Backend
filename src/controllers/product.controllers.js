@@ -7,19 +7,22 @@ import { AsyncHandler } from "../utils/AsyncHandler.js";
 
 // get product from slug, access is public not protected
 const getProductBySlug = AsyncHandler(async (req, res) => {
-  const productSlug = req.params.slug;
-  console.log("the product slug: ", productSlug);
+  const categorySlug = req.params.slug;
+  console.log("the product slug: ", categorySlug);
 
-  if (!productSlug || productSlug.trim() === "") {
+  if (!categorySlug || categorySlug.trim() === "") {
     throw new ApiError(400, "Product slug is required");
   }
-
+  const category = await Category.findOne({ slug: categorySlug });
+  if (!category) {
+    throw new ApiError(404, `Category with slug ${categorySlug} not found`);
+  }
   const productWithCategory = await Product.findOne({
-    slug: productSlug,
+    category: category._id,
   }).populate("category", "name");
 
   if (!productWithCategory) {
-    throw new ApiError(404, `Product with ${productSlug} slug not found`);
+    throw new ApiError(404, `Product with ${categorySlug} slug not found`);
   }
   console.log("product with category: ", productWithCategory.category?.name);
 
