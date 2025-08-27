@@ -7,7 +7,7 @@ import { router as userRouter } from "./routes/user.routes.js";
 import { router as addressRouter } from "./routes/address.routes.js";
 import { router as productRouter } from "./routes/product.routes.js";
 import { router as cartRouter } from "./routes/cart.routes.js";
-import { router as orderRouter } from "./routes/order.routes.js";
+// import { router as orderRouter } from "./routes/order.routes.js";
 
 const app = express();
 app.use(
