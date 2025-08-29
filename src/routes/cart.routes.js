@@ -6,7 +6,7 @@ import {
   clearUserCart,
 } from "../controllers/cart.controllers.js";
 const router = Router();
-router.use(verifyJWT);
+// router.use(verifyJWT);
 
 router.route("/sync").post(syncCartFromRedux);
 router.route("/").get(getUserCart);
