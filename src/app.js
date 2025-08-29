@@ -18,7 +18,12 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-
+// ✅ Add these debug logs:
+console.log("✅ Auth routes registered at /api/v1/auth");
+console.log("✅ User routes registered at /api/v1/user");
+console.log("✅ Address routes registered at /api/v1/addresses");
+console.log("✅ Product routes registered at /api/v1/products");
+console.log("✅ Cart routes registered at /api/v1/cart");
 // global middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
