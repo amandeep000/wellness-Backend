@@ -1,15 +1,21 @@
-// import { Router } from "express";
-// import {
-//   createOrderFromCart,
-//   getUserOrders,
-//   getOrderById,
-// } from "../controllers/order.controllers.js";
-// import verifyJWT from "../middlewares/auth.middlewares.js";
-// const router = Router();
-// router.use(verifyJWT);
+import { Router } from "express";
+import verifyJWT from "../middlewares/auth.middlewares.js";
+import {
+  createOrderFromCart,
+  listMyOrders,
+  getMyOrderById,
+} from "../controllers/order.controllers.js";
+const router = Router();
 
-// router.route("/").post(createOrderFromCart);
-// router.route("/").get(getUserOrders);
-// router.route("/:orderId").get(getOrderById);
+router.use(verifyJWT);
 
-// export { router };
+// POST /api/v1/orders      → create from current cart
+router.post("/", createOrderFromCart);
+
+// GET  /api/v1/orders      → list logged-in user’s orders
+router.get("/", listMyOrders);
+
+// GET  /api/v1/orders/:id  → single order (if it belongs to user)
+router.get("/:id", getMyOrderById);
+
+export default router;
