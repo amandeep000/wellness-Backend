@@ -44,4 +44,25 @@ const createCheckoutSession = AsyncHandler(async (req, res) => {
   res.json(new ApiResponse(200, { sessionId: session.id }));
 });
 
-export { createCheckoutSession };
+const confirmCheckout = AsyncHandler(async (req, res) => {
+  const { session_id } = req.query;
+  if (!session_id) throw new ApiError(400, "session id is required");
+
+  const session = await stripe.checkout.sessions.retrieve(session_id, {
+    expand: ["payment_intent"],
+  });
+
+  if (session.payment_status !== "paid") {
+    throw new ApiError(400, "Payment not completed");
+  }
+
+  const order = await createOrderFromCartInternal(
+    session.metadata.userId,
+    session
+  );
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, order, "order created and paid"));
+});
+export { createCheckoutSession, confirmCheckout };
