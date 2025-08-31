@@ -37,7 +37,7 @@ const createCheckoutSession = AsyncHandler(async (req, res) => {
       },
     })),
     metadata: { userId: req.user._id.toString() },
-    success_url: `${process.env.CLIENT_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${process.env.CLIENT_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.CLIENT_URL}/`,
   });
 
