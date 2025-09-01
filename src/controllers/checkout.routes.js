@@ -48,93 +48,138 @@ const createCheckoutSession = AsyncHandler(async (req, res) => {
 
 const createOrderFromCartInternal = async (userId, stripeSession) => {
   try {
-    // 1. Retrieve and validate user's cart
-    const cart = await Cart.findOne({ userId }).populate("items.product");
-    if (!cart || cart.items.length === 0) {
-      throw new Error("Cart is empty or not found");
+    console.log(`Creating order for user: ${userId}`);
+    console.log(`Stripe session ID: ${stripeSession.id}`);
+
+    // ✅ Don't rely on cart - use Stripe session line_items instead
+    let lineItems;
+
+    try {
+      // Retrieve line items from Stripe session
+      lineItems = await stripe.checkout.sessions.listLineItems(
+        stripeSession.id,
+        {
+          expand: ["data.price.product"],
+        }
+      );
+      console.log(
+        `Found ${lineItems.data.length} line items in Stripe session`
+      );
+    } catch (stripeError) {
+      console.error("Error fetching Stripe line items:", stripeError);
+      throw new ApiError(500, "Failed to retrieve order items from Stripe");
     }
 
-    // 2. Create OrderItems first (since Order references them)
-    const orderItemPromises = cart.items.map(async (item) => {
+    if (!lineItems.data || lineItems.data.length === 0) {
+      throw new ApiError(400, "No items found in payment session");
+    }
+
+    // ✅ Create OrderItems from Stripe line items (not from cart)
+    const orderItemPromises = lineItems.data.map(async (stripeItem) => {
+      const productName =
+        stripeItem.price.product.name || stripeItem.description;
+      const unitAmount = stripeItem.price.unit_amount / 100; // Convert from cents
+      const quantity = stripeItem.quantity;
+
+      // Try to find the product in your database by name
+      let product;
+      try {
+        product = await Product.findOne({ name: productName });
+        if (!product) {
+          // If not found by name, create a fallback
+          console.warn(`Product not found in database: ${productName}`);
+          product = {
+            _id: new mongoose.Types.ObjectId(),
+            name: productName,
+            price: unitAmount,
+            image: "",
+          };
+        }
+      } catch (productError) {
+        console.error("Error finding product:", productError);
+        // Create fallback product
+        product = {
+          _id: new mongoose.Types.ObjectId(),
+          name: productName,
+          price: unitAmount,
+          image: "",
+        };
+      }
+
       const orderItem = new OrderItem({
-        order: null, // Will be updated after Order is created
-        product: item.product._id,
-        productName: item.product.name,
-        productImage: item.product.image || item.product.images?.[0] || "",
-        productPrice: item.product.price,
-        productQuantity: item.quantity,
+        order: null, // Will be updated after Order creation
+        product: product._id,
+        productName: productName,
+        productImage: product.image || "",
+        productPrice: unitAmount,
+        productQuantity: quantity,
       });
+
       return await orderItem.save();
     });
 
     const savedOrderItems = await Promise.all(orderItemPromises);
     const orderItemIds = savedOrderItems.map((item) => item._id);
 
-    // 3. Extract shipping and billing data from Stripe session
-    const shipping = stripeSession.shipping || {};
-    const customerDetails = stripeSession.customer_details || {};
+    // ✅ Calculate pricing from Stripe (not from cart)
+    const subtotal = lineItems.data.reduce((sum, item) => {
+      return sum + (item.price.unit_amount * item.quantity) / 100;
+    }, 0);
 
-    // 4. Calculate pricing details
     const {
       tax: taxPrice,
       shipping: shippingPrice,
       total: totalPrice,
     } = calcPricing(subtotal);
 
-    // 5. Get payment method details (expand the session if needed)
-    const paymentIntent = stripeSession.payment_intent;
-    let paymentMethodDetails = {};
+    // Extract addresses from Stripe session
+    const shipping_details = stripeSession.shipping || {};
+    const customer_details = stripeSession.customer_details || {};
 
-    if (typeof paymentIntent === "object" && paymentIntent.charges?.data?.[0]) {
-      const charge = paymentIntent.charges.data[0];
-      paymentMethodDetails = {
-        type: charge.payment_method_details?.type || "card",
-        card: charge.payment_method_details?.card || {},
-      };
-    }
-
-    // 6. Create the Order document
+    // Create the Order document
     const order = new Order({
       customer: userId,
       orderItems: orderItemIds,
 
-      // Shipping Address (from Stripe shipping info)
+      // Shipping Address
       shippingAddress: {
-        fullname: shipping?.name || customerDetails?.name || "",
-        email: customerDetails?.email || stripeSession.customer_email || "",
-        street: shipping?.address?.line1 || "",
-        city: shipping?.address?.city || "",
-        state: shipping?.address?.state || "",
-        postalCode: shipping?.address?.postal_code || "",
-        country: shipping?.address?.country || "",
-        phoneNumber: customerDetails?.phone || "",
+        fullname: shipping_details?.name || customer_details?.name || "",
+        email: customer_details?.email || stripeSession.customer_email || "",
+        street: shipping_details?.address?.line1 || "",
+        city: shipping_details?.address?.city || "",
+        state: shipping_details?.address?.state || "",
+        postalCode: shipping_details?.address?.postal_code || "",
+        country: shipping_details?.address?.country || "",
+        phoneNumber: customer_details?.phone || "",
       },
 
-      // Billing Address (from Stripe customer details)
+      // Billing Address
       billingAddress: {
-        name: customerDetails?.name || "",
-        email: customerDetails?.email || stripeSession.customer_email || "",
-        phone: customerDetails?.phone || "",
+        name: customer_details?.name || "",
+        email: customer_details?.email || stripeSession.customer_email || "",
+        phone: customer_details?.phone || "",
         address: {
-          line1: customerDetails?.address?.line1 || "",
-          line2: customerDetails?.address?.line2 || "",
-          city: customerDetails?.address?.city || "",
-          state: customerDetails?.address?.state || "",
-          postal_code: customerDetails?.address?.postal_code || "",
-          country: customerDetails?.address?.country || "",
+          line1: customer_details?.address?.line1 || "",
+          line2: customer_details?.address?.line2 || "",
+          city: customer_details?.address?.city || "",
+          state: customer_details?.address?.state || "",
+          postal_code: customer_details?.address?.postal_code || "",
+          country: customer_details?.address?.country || "",
         },
       },
 
       // Stripe Payment Information
       stripePaymentIntentId:
-        typeof paymentIntent === "string"
-          ? paymentIntent
-          : paymentIntent?.id || stripeSession.id,
+        stripeSession.payment_intent?.id ||
+        stripeSession.payment_intent ||
+        stripeSession.id,
       paymentStatus: stripeSession.payment_status,
       paymentMethod: stripeSession.payment_method_types?.[0] || "card",
-      paymentMethodDetails: paymentMethodDetails,
+      paymentMethodDetails: {
+        type: "card",
+      },
 
-      // Pricing
+      // Pricing (using your business logic)
       taxPrice,
       shippingPrice,
       totalPrice,
@@ -145,34 +190,42 @@ const createOrderFromCartInternal = async (userId, stripeSession) => {
       paidAt: stripeSession.payment_status === "paid" ? new Date() : null,
     });
 
-    // 7. Save the order
     const savedOrder = await order.save();
 
-    // 8. Update OrderItems with the correct order reference
+    // Update OrderItems with the correct order reference
     await OrderItem.updateMany(
       { _id: { $in: orderItemIds } },
       { order: savedOrder._id }
     );
 
-    // 9. Clear the user's cart after successful order creation
-    await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } });
+    // ✅ Clear the user's cart (if it exists) after successful order creation
+    try {
+      await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } });
+      console.log("Cart cleared after successful order creation");
+    } catch (cartError) {
+      console.log(
+        "Cart was already empty or error clearing cart:",
+        cartError.message
+      );
+      // Don't throw error if cart doesn't exist
+    }
 
-    // 10. Populate the order for return
+    // Return populated order
     const populatedOrder = await Order.findById(savedOrder._id)
       .populate({
         path: "orderItems",
         populate: {
           path: "product",
-          model: "Product",
+          select: "name price image",
         },
       })
       .populate("customer", "name email");
 
-    console.log(`Order created successfully: ${savedOrder._id}`);
+    console.log(`✅ Order created successfully: ${savedOrder._id}`);
     return populatedOrder;
   } catch (error) {
-    console.error("Error creating order from cart:", error);
-    throw new Error(`Failed to create order: ${error.message}`);
+    console.error("❌ Error creating order:", error);
+    throw new ApiError(500, `Failed to create order: ${error.message}`);
   }
 };
 
@@ -181,7 +234,6 @@ const confirmCheckout = AsyncHandler(async (req, res) => {
   if (!session_id) throw new ApiError(400, "session id is required");
 
   try {
-    // Retrieve the Stripe session with expanded data
     const session = await stripe.checkout.sessions.retrieve(session_id, {
       expand: [
         "payment_intent",
@@ -196,7 +248,6 @@ const confirmCheckout = AsyncHandler(async (req, res) => {
       throw new ApiError(400, "Payment not completed");
     }
 
-    // Create order from cart using the helper function
     const order = await createOrderFromCartInternal(
       session.metadata.userId,
       session
