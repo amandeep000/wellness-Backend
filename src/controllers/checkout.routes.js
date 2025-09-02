@@ -6,6 +6,8 @@ import Cart from "../models/cart.models.js";
 import { calcPricing } from "./order.helper.js";
 import Order from "../models/order.models.js";
 import OrderItem from "../models/orderItem.models.js";
+import Product from "../models/product.models.js";
+import mongoose from "mongoose";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-07-30.basil",
