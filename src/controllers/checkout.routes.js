@@ -50,165 +50,79 @@ const createCheckoutSession = AsyncHandler(async (req, res) => {
 
 const createOrderFromCartInternal = async (userId, stripeSession) => {
   try {
-    console.log(`Creating order for user: ${userId}`);
-    console.log(`Stripe session ID: ${stripeSession.id}`);
-
-    // Retrieve line items from Stripe session with expanded product info
+    // Retrieve line items directly from Stripe
     const lineItems = await stripe.checkout.sessions.listLineItems(
       stripeSession.id,
       {
         expand: ["data.price.product"],
       }
     );
-    console.log(`Found ${lineItems.data.length} line items in Stripe session`);
 
     if (!lineItems.data || lineItems.data.length === 0) {
       throw new ApiError(400, "No items found in payment session");
     }
 
-    // Calculate subtotal from line items
-    const subtotal = lineItems.data.reduce((sum, item) => {
-      return sum + (item.price.unit_amount * item.quantity) / 100;
-    }, 0);
+    // Map Stripe info into a simple object for frontend
+    const items = lineItems.data.map((item) => ({
+      productName: item.price.product.name || item.description,
+      productPrice: item.price.unit_amount / 100,
+      quantity: item.quantity,
+      productImage: item.price.product.images?.[0] || "",
+    }));
 
-    const {
-      tax: taxPrice,
-      shipping: shippingPrice,
-      total: totalPrice,
-    } = calcPricing(subtotal);
+    // Extract shipping & billing from stripeSession
+    const shipping = stripeSession.shipping || {};
+    const customer = stripeSession.customer_details || {};
 
-    // Extract shipping and billing info
-    const shipping_details = stripeSession.shipping || {};
-    const customer_details = stripeSession.customer_details || {};
+    // Calculate totals using your business logic
+    const subtotal = items.reduce(
+      (sum, i) => sum + i.productPrice * i.quantity,
+      0
+    );
+    const { tax, shipping: shippingCost, total } = calcPricing(subtotal);
 
-    // 1. Create Order WITHOUT orderItems yet
-    const order = new Order({
-      customer: userId,
+    // Return a simplified order-like object to the frontend
+    return {
+      userId,
+      items,
       shippingAddress: {
-        fullname: shipping_details?.name || customer_details?.name || "",
-        email: customer_details?.email || stripeSession.customer_email || "",
-        street: shipping_details?.address?.line1 || "",
-        city: shipping_details?.address?.city || "",
-        state: shipping_details?.address?.state || "",
-        postalCode: shipping_details?.address?.postal_code || "",
-        country: shipping_details?.address?.country || "",
-        phoneNumber: customer_details?.phone || "",
+        fullname: shipping.name || customer.name || "",
+        email: customer.email || stripeSession.customer_email || "",
+        street: shipping.address?.line1 || "",
+        city: shipping.address?.city || "",
+        state: shipping.address?.state || "",
+        postalCode: shipping.address?.postal_code || "",
+        country: shipping.address?.country || "",
+        phoneNumber: customer.phone || "",
       },
       billingAddress: {
-        name: customer_details?.name || "",
-        email: customer_details?.email || stripeSession.customer_email || "",
-        phone: customer_details?.phone || "",
+        name: customer.name || "",
+        email: customer.email || stripeSession.customer_email || "",
+        phone: customer.phone || "",
         address: {
-          line1: customer_details?.address?.line1 || "",
-          line2: customer_details?.address?.line2 || "",
-          city: customer_details?.address?.city || "",
-          state: customer_details?.address?.state || "",
-          postal_code: customer_details?.address?.postal_code || "",
-          country: customer_details?.address?.country || "",
+          line1: customer.address?.line1 || "",
+          line2: customer.address?.line2 || "",
+          city: customer.address?.city || "",
+          state: customer.address?.state || "",
+          postal_code: customer.address?.postal_code || "",
+          country: customer.address?.country || "",
         },
       },
-      stripePaymentIntentId:
-        stripeSession.payment_intent?.id ||
-        stripeSession.payment_intent ||
-        stripeSession.id,
       paymentStatus: stripeSession.payment_status,
       paymentMethod: stripeSession.payment_method_types?.[0] || "card",
-      paymentMethodDetails: {
-        type: "card", // default, expand if needed
-      },
-      taxPrice,
-      shippingPrice,
-      totalPrice,
-      orderStatus: "pending",
-      isPaid: stripeSession.payment_status === "paid",
+      taxPrice: tax,
+      shippingPrice: shippingCost,
+      totalPrice: total,
+      paymentIntentId: stripeSession.payment_intent?.id || stripeSession.id,
       paidAt: stripeSession.payment_status === "paid" ? new Date() : null,
-      orderItems: [], // start empty
-    });
-
-    const savedOrder = await order.save();
-
-    // 2. Create and save OrderItems with order reference
-    const orderItemPromises = lineItems.data.map(async (stripeItem) => {
-      const productName =
-        stripeItem.price.product.name || stripeItem.description;
-      const unitAmount = stripeItem.price.unit_amount / 100;
-      const quantity = stripeItem.quantity;
-
-      // Try to find product in your DB by name
-      let product;
-      try {
-        product = await Product.findOne({ name: productName });
-        if (!product) {
-          console.warn(`Product not found in DB: ${productName}`);
-          product = {
-            _id: new mongoose.Types.ObjectId(),
-            name: productName,
-            price: unitAmount,
-            image: "",
-          };
-        }
-      } catch (err) {
-        console.error("Error finding product:", err);
-        product = {
-          _id: new mongoose.Types.ObjectId(),
-          name: productName,
-          price: unitAmount,
-          image: "",
-        };
-      }
-
-      // Ensure productImage is set or fallback
-      const image =
-        product.image && product.image.length > 0
-          ? product.image
-          : product.images?.[0] || "default-product-image.png";
-
-      const orderItem = new OrderItem({
-        order: savedOrder._id,
-        product: product._id,
-        productName,
-        productImage: image,
-        productPrice: unitAmount,
-        productQuantity: quantity,
-      });
-
-      return await orderItem.save();
-    });
-
-    const savedOrderItems = await Promise.all(orderItemPromises);
-
-    // 3. Link order items to order and update
-    savedOrder.orderItems = savedOrderItems.map((item) => item._id);
-    await savedOrder.save();
-
-    // 4. Clear user cart after successful order
-    try {
-      await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } });
-      console.log("Cart cleared after successful order creation");
-    } catch (cartError) {
-      console.log(
-        "Cart was already empty or error clearing cart:",
-        cartError.message
-      );
-    }
-
-    // 5. Return populated order with items and customer info
-    const populatedOrder = await Order.findById(savedOrder._id)
-      .populate({
-        path: "orderItems",
-        populate: {
-          path: "product",
-          select: "name price image",
-        },
-      })
-      .populate("customer", "name email");
-
-    console.log(`✅ Order created successfully: ${savedOrder._id}`);
-
-    return populatedOrder;
+      orderId: stripeSession.id, // Use Stripe session ID as temporary order ID
+    };
   } catch (error) {
-    console.error("❌ Error creating order:", error);
-    throw new ApiError(500, `Failed to create order: ${error.message}`);
+    console.error("Error wrapping Stripe order data:", error);
+    throw new ApiError(
+      500,
+      `Failed to process payment confirmation: ${error.message}`
+    );
   }
 };
 
@@ -218,30 +132,25 @@ const confirmCheckout = AsyncHandler(async (req, res) => {
 
   try {
     const session = await stripe.checkout.sessions.retrieve(session_id, {
-      expand: [
-        "payment_intent",
-        "payment_intent.charges",
-        "customer_details",
-        "shipping",
-        "total_details",
-      ],
+      expand: ["payment_intent", "customer_details", "shipping"],
     });
 
     if (session.payment_status !== "paid") {
       throw new ApiError(400, "Payment not completed");
     }
 
-    const order = await createOrderFromCartInternal(
+    const orderData = await createOrderFromCartInternal(
       session.metadata.userId,
       session
     );
 
     return res
-      .status(201)
-      .json(new ApiResponse(201, order, "Order created and payment confirmed"));
+      .status(200)
+      .json(new ApiResponse(200, orderData, "Payment confirmed"));
   } catch (error) {
     console.error("Checkout confirmation error:", error);
     throw new ApiError(500, `Checkout confirmation failed: ${error.message}`);
   }
 });
+
 export { createCheckoutSession, createOrderFromCartInternal, confirmCheckout };

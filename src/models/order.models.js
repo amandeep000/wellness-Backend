@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 
-// models/order.models.js
 const orderSchema = new mongoose.Schema(
   {
     customer: {
@@ -16,7 +15,7 @@ const orderSchema = new mongoose.Schema(
       },
     ],
 
-    // ✅ SHIPPING ADDRESS FROM STRIPE
+    //  SHIPPING ADDRESS FROM STRIPE
     shippingAddress: {
       fullname: { type: String, required: true },
       email: { type: String, required: true },
@@ -28,7 +27,7 @@ const orderSchema = new mongoose.Schema(
       phoneNumber: { type: String },
     },
 
-    // ✅ BILLING ADDRESS FROM STRIPE
+    //  BILLING ADDRESS FROM STRIPE
     billingAddress: {
       name: String,
       email: String,
@@ -43,10 +42,10 @@ const orderSchema = new mongoose.Schema(
       },
     },
 
-    // ✅ STRIPE PAYMENT DATA
-    stripePaymentIntentId: { type: String, required: true, unique: true },
-    paymentStatus: { type: String, required: true }, // From Stripe
-    paymentMethod: { type: String, required: true }, // From Stripe
+    //  STRIPE PAYMENT DATA
+    stripePaymentIntentId: { type: String, unique: true },
+    paymentStatus: { type: String },
+    paymentMethod: { type: String },
     paymentMethodDetails: {
       type: String,
       card: {
