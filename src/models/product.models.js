@@ -26,6 +26,11 @@ const productSchema = new mongoose.Schema(
       required: true,
       default: "#FFFFFF",
     },
+    textColor: {
+      type: String,
+      required: true,
+      default: "#FFFFFF",
+    },
     images: {
       type: [{ type: String, required: true }],
       validate: {
