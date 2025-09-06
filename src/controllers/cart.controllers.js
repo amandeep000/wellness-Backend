@@ -40,20 +40,12 @@ const syncCartFromRedux = AsyncHandler(async (req, res) => {
     quantity: parseInt(item.quantity),
   }));
 
-  // ################ UPDATED:
-  // Replace old pattern (find+save) with atomic upsert:
-  // let userCart = await Cart.findOne({ userId });
-  // if (userCart) { userCart.items = cartItems; await userCart.save(); }
-  // else { userCart = await Cart.create({ ... }); }
-
-  // NEW:
   let userCart = await Cart.findOneAndUpdate(
     { userId },
     { $set: { items: cartItems } },
     { new: true, upsert: true }
   );
 
-  // Always re-fetch & populate after mutation
   const populatedCart = await Cart.findById(userCart._id).populate(
     "items.product",
     "name slug price images stock"
@@ -63,10 +55,6 @@ const syncCartFromRedux = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, populatedCart, "cart synced successfully"));
 });
 
-/**
- * Get User Cart
- * Fetches the user's cart, filters non-existent products if any, and auto-cleans the cart.
- */
 const getUserCart = AsyncHandler(async (req, res) => {
   const userId = req.user._id;
 
@@ -79,12 +67,10 @@ const getUserCart = AsyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, [], "Cart is empty"));
   }
 
-  // filter out any products that do not exist anymore
   const validItems = userCart.items.filter((item) => item.product !== null);
 
-  // Optionally auto-clean invalid items in DB
   if (validItems.length !== userCart.items.length) {
-    await Cart.updateOne({ userId }, { $set: { items: validItems } }); // UPDATED
+    await Cart.updateOne({ userId }, { $set: { items: validItems } });
   }
 
   const cartSummary = {
@@ -106,10 +92,6 @@ const getUserCart = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, responseData, "cart retreived successfully"));
 });
 
-/**
- * Update Cart Item Quantity
- * Updates the quantity of a specific item in the user's cart using atomic update.
- */
 const updateCartItemQuantity = AsyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { productId, quantity } = req.body;
@@ -128,8 +110,6 @@ const updateCartItemQuantity = AsyncHandler(async (req, res) => {
     throw new ApiError(400, `only ${product.stock} is left in the inventory`);
   }
 
-  // ################ UPDATED:
-  // Replace find+save with atomic update
   await Cart.updateOne(
     { userId, "items.product": productId },
     { $set: { "items.$.quantity": parseInt(quantity) } }
@@ -145,15 +125,10 @@ const updateCartItemQuantity = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedCart, "cart item updated successfully"));
 });
 
-/**
- * Remove Item From Cart
- * Removes a product from the user's cart using atomic $pull update.
- */
 const removeItemFromCart = AsyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { productId } = req.params;
-  // ################ UPDATED:
-  // Instead of loading and splicing, use $pull atomic op
+
   await Cart.updateOne(
     { userId },
     { $pull: { items: { product: productId } } }
@@ -168,13 +143,8 @@ const removeItemFromCart = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedCart, "cart updated successfully"));
 });
 
-/**
- * Clear User Cart
- * Atomically clears the user's cart.
- */
 const clearUserCart = AsyncHandler(async (req, res) => {
   const userId = req.user._id;
-  // ################ UPDATED:
   await Cart.updateOne({ userId }, { $set: { items: [] } });
 
   return res

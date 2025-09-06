@@ -276,46 +276,7 @@ const getCurrentUser = AsyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, { currentUser: user }, "Current user details"));
 });
-// forget password
-// const forgetPassword = AsyncHandler(async (req, res) => {
-//   const { email } = req.body;
-//   if (!email) {
-//     throw new ApiError(404, "Email not found.Please provide an valid email.");
-//   }
-//   const checkUser = await User.findOne({ email });
-//   if (!checkUser) {
-//     throw new ApiError(404, "User not found.Try signup");
-//   }
-//   try {
-//    const resetToken = crypto.randomBytes(32).toString('hex')
-//    const hashedToken = crypto.createHash("sha256")
-//     const transporter = nodemailer.createTransport({
-//       service: "gmail",
-//       secure: true,
-//       auth: {
-//         user: process.env.GMAIL,
-//         pass: process.env.GMAIL_PASSWORD,
-//       },
-//     });
-//     const receiver = {
-//       from: process.env.GMAIL,
-//       to: email,
-//       subject: "Password reset Request",
-//       text: `Click here in the link to generate new passwor ${process.env.CLIENT_URL}/reset-password/${token}`,
-//     };
-//     await transporter.sendMail(receiver);
-//     res
-//       .status(200)
-//       .json(
-//         new ApiResponse(
-//           200,
-//           "Password reset link sent successffully on your gmail account"
-//         )
-//       );
-//   } catch (error) {
-//     throw new ApiError(500, "failed to generate password reset link");
-//   }
-// });
+
 export {
   registerUser,
   loginUser,

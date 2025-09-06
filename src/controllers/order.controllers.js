@@ -29,7 +29,6 @@ const createOrderFromCart = AsyncHandler(async (req, res) => {
     throw new ApiError(400, "Your cart is empty");
   }
 
-  // check for product stock and availability
   let subtotal = 0;
   const shortages = [];
   for (const cItem of cart.items) {

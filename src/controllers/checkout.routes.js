@@ -50,7 +50,6 @@ const createCheckoutSession = AsyncHandler(async (req, res) => {
 
 const createOrderFromCartInternal = async (userId, stripeSession) => {
   try {
-    // Retrieve line items directly from Stripe
     const lineItems = await stripe.checkout.sessions.listLineItems(
       stripeSession.id,
       {
@@ -62,7 +61,6 @@ const createOrderFromCartInternal = async (userId, stripeSession) => {
       throw new ApiError(400, "No items found in payment session");
     }
 
-    // Map Stripe info into a simple object for frontend
     const items = lineItems.data.map((item) => ({
       productName: item.price.product.name || item.description,
       productPrice: item.price.unit_amount / 100,
@@ -70,18 +68,14 @@ const createOrderFromCartInternal = async (userId, stripeSession) => {
       productImage: item.price.product.images?.[0] || "",
     }));
 
-    // Extract shipping & billing from stripeSession
     const shipping = stripeSession.shipping || {};
     const customer = stripeSession.customer_details || {};
 
-    // Calculate totals using your business logic
     const subtotal = items.reduce(
       (sum, i) => sum + i.productPrice * i.quantity,
       0
     );
     const { tax, shipping: shippingCost, total } = calcPricing(subtotal);
-
-    // Return a simplified order-like object to the frontend
     return {
       userId,
       items,
@@ -115,7 +109,7 @@ const createOrderFromCartInternal = async (userId, stripeSession) => {
       totalPrice: total,
       paymentIntentId: stripeSession.payment_intent?.id || stripeSession.id,
       paidAt: stripeSession.payment_status === "paid" ? new Date() : null,
-      orderId: stripeSession.id, // Use Stripe session ID as temporary order ID
+      orderId: stripeSession.id,
     };
   } catch (error) {
     console.error("Error wrapping Stripe order data:", error);
