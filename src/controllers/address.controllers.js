@@ -109,9 +109,8 @@ const updateAddress = AsyncHandler(async (req, res) => {
 const deleteAddress = AsyncHandler(async (req, res) => {
   const { addressId } = req.params;
   const user = await User.findById(req.user._id);
-  if (!user) {
-    throw new ApiError(404, "User not found!");
-  }
+  if (!user) throw new ApiError(404, "User not found!");
+
   const address = user.addresses.id(addressId);
   if (!address) throw new ApiError(404, "Address not found");
 
@@ -123,13 +122,15 @@ const deleteAddress = AsyncHandler(async (req, res) => {
   }
 
   const wasDefault = address.isDefault;
-  address.remove();
+
+  user.addresses.pull({ _id: addressId });
 
   if (wasDefault && user.addresses.length > 0) {
     user.addresses[0].isDefault = true;
   }
 
   await user.save();
+
   res
     .status(200)
     .json(new ApiResponse(200, user.addresses, "Address deleted successfully"));
