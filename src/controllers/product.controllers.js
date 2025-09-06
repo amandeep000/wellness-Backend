@@ -5,7 +5,7 @@ import { ApiError } from "../utils/ApiError.utils.js";
 import { ApiResponse } from "../utils/ApiResponse.utils.js";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 
-// get product from slug, access is public not protected
+// get product from slug
 const getProductBySlug = AsyncHandler(async (req, res) => {
   let productSlug = req.params.slug;
   console.log("The product slug (received):", productSlug);
@@ -13,8 +13,6 @@ const getProductBySlug = AsyncHandler(async (req, res) => {
   if (!productSlug || productSlug.trim() === "") {
     throw new ApiError(400, "Product slug is required");
   }
-
-  // Normalize slug to lowercase to match DB storage
   productSlug = productSlug.toLowerCase();
 
   const productWithCategory = await Product.findOne({
@@ -82,6 +80,52 @@ const getProductsByCategory = AsyncHandler(async (req, res) => {
     );
 });
 
+const searchProducts = AsyncHandler(async (req, res) => {
+  const { q, category, minPrice, maxPrice } = req.query;
+
+  if (!q || q.trim() === "") {
+    throw new ApiError(400, "Search query is required");
+  }
+
+  const searchFilters = {
+    $or: [{ name: { $regex: q, $options: "i" } }],
+  };
+
+  if (category) {
+    const categoryDoc = await Category.findOne({ slug: category });
+    if (categoryDoc) {
+      searchFilters.category = categoryDoc._id;
+    }
+  }
+
+  if (minPrice || maxPrice) {
+    searchFilters.price = {};
+    if (minPrice) searchFilters.price.$gte = Number(minPrice);
+    if (maxPrice) searchFilters.price.$lte = Number(maxPrice);
+  }
+
+  const products = await Product.find(searchFilters)
+    .populate("category", "name slug")
+    .select("name slug price images stock category")
+    .lean();
+
+  if (Product.length === 0) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, [], `No products found matching ${q}`));
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        products,
+        `Found ${products.length} products matching ${q}`
+      )
+    );
+});
+
 const getAllProductsWithPagination = AsyncHandler(async (req, res) => {
   const page = req.query.page || 1;
   const limit = req.query.limit || 10;
@@ -122,4 +166,9 @@ const getAllProductsWithPagination = AsyncHandler(async (req, res) => {
   } catch (error) {}
 });
 
-export { getAllProducts, getProductBySlug, getProductsByCategory };
+export {
+  getAllProducts,
+  getProductBySlug,
+  getProductsByCategory,
+  searchProducts,
+};
