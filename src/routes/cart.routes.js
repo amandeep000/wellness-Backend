@@ -12,6 +12,6 @@ router.route("/sync").post(syncCartFromRedux);
 router.route("/").get(getUserCart);
 // router.route("/item").put(updateCartItemQuantity);
 // router.route("/item/:productId").delete(removeItemFromCart);
-router.route("/delete").delete(clearUserCart);
+router.route("/").delete(clearUserCart);
 
 export { router };
