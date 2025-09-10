@@ -101,7 +101,7 @@ const createAndSaveOrderFromSession = async (session) => {
 
   // Create Order document skeleton (orderItems empty for now)
   const newOrder = await Order.create({
-    customer: mongoose.Types.ObjectId(userId),
+    customer: new mongoose.Types.ObjectId(userId),
     orderItems: [],
     shippingAddress: {
       fullname: session.shipping?.name || session.shipping_details?.name || "",
@@ -192,7 +192,7 @@ const createAndSaveOrderFromSession = async (session) => {
 
   try {
     await Cart.updateOne(
-      { userId: mongoose.Types.ObjectId(userId) },
+      { userId: new mongoose.Types.ObjectId(userId) },
       { $set: { items: [] } }
     );
   } catch (err) {
