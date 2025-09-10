@@ -134,7 +134,10 @@ const createAndSaveOrderFromSession = async (session) => {
       phone: session.customer_details?.phone || "",
       address: session.customer_details?.address || {},
     },
-    stripePaymentIntentId: session.payment_intent || session.id,
+    stripePaymentIntentId:
+      typeof session.payment_intent === "object"
+        ? session.payment_intent.id // keep only the ID
+        : session.payment_intent || session.id,
     paymentStatus: session.payment_status || "unknown",
     paymentMethod: session.payment_method_types?.[0] || "card",
     paymentMethodDetails: {},
