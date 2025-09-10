@@ -99,7 +99,7 @@ const createAndSaveOrderFromSession = async (session) => {
     ? session.total_details.amount_tax / 100
     : 0;
 
-  // Create Order document skeleton (orderItems empty for now)
+  // Create Order document skeleton
   const newOrder = await Order.create({
     customer: new mongoose.Types.ObjectId(userId),
     orderItems: [],
@@ -118,17 +118,6 @@ const createAndSaveOrderFromSession = async (session) => {
       country:
         session.collected_information?.shipping_details?.address?.country || "",
       phoneNumber: session.customer_details?.phone,
-      //   fullname: session.shipping?.name || "",
-      //   email: session.customer_details?.email || "",
-      //   street: session.shipping?.address?.line1 || "",
-      //   city: session.shipping?.address?.city || "",
-      //   state:
-      //     session.shipping?.address?.state ||
-      //     session.shipping_details?.address?.state ||
-      //     "",
-      //   postalCode: session.shipping?.address?.postal_code || "",
-      //   country: session.shipping?.address?.country || "",
-      //   phoneNumber: session.customer_details?.phone || "",
     },
     billingAddress: {
       name: session.customer_details?.name || "",
@@ -138,7 +127,7 @@ const createAndSaveOrderFromSession = async (session) => {
     },
     stripePaymentIntentId:
       typeof session.payment_intent === "object"
-        ? session.payment_intent.id // keep only the ID
+        ? session.payment_intent.id
         : session.payment_intent || session.id,
     paymentStatus: session.payment_status || "unknown",
     paymentMethod: session.payment_method_types?.[0] || "card",
