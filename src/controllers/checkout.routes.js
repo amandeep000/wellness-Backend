@@ -104,29 +104,25 @@ const createAndSaveOrderFromSession = async (session) => {
     customer: new mongoose.Types.ObjectId(userId),
     orderItems: [],
     shippingAddress: {
-      fullname: session.shipping?.name || session.shipping_details?.name || "",
-      email: session.customer_details?.email || session.customer_email || "",
-      street:
-        session.shipping?.address?.line1 ||
-        session.shipping_details?.address?.line1 ||
-        "",
-      city:
-        session.shipping?.address?.city ||
-        session.shipping_details?.address?.city ||
-        "",
-      state:
-        session.shipping?.address?.state ||
-        session.shipping_details?.address?.state ||
-        "",
-      postalCode:
-        session.shipping?.address?.postal_code ||
-        session.shipping_details?.address?.postal_code ||
-        "",
-      country:
-        session.shipping?.address?.country ||
-        session.shipping_details?.address?.country ||
-        "",
+      fullname: session.shipping_details?.name || "",
+      email: session.customer_details?.email || "",
+      street: session.shipping_details?.address?.line1 || "",
+      city: session.shipping_details?.address?.city || "",
+      state: session.shipping_details?.address?.state || "",
+      postalCode: session.shipping_details?.address?.postal_code || "",
+      country: session.shipping_details?.address?.country || "",
       phoneNumber: session.customer_details?.phone || "",
+      //   fullname: session.shipping?.name || "",
+      //   email: session.customer_details?.email || "",
+      //   street: session.shipping?.address?.line1 || "",
+      //   city: session.shipping?.address?.city || "",
+      //   state:
+      //     session.shipping?.address?.state ||
+      //     session.shipping_details?.address?.state ||
+      //     "",
+      //   postalCode: session.shipping?.address?.postal_code || "",
+      //   country: session.shipping?.address?.country || "",
+      //   phoneNumber: session.customer_details?.phone || "",
     },
     billingAddress: {
       name: session.customer_details?.name || "",
