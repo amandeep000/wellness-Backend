@@ -242,7 +242,7 @@ const stripeWebhook = AsyncHandler(async (req, res) => {
   res.status(200).json(200, { received: true });
 });
 
-const confirmCheckout = AsyncHandler(async (req, res) => {
+const confirmCheckout = AsyncHandler(async (req, res, next) => {
   const { session_id } = req.query;
   if (!session_id) throw new ApiError(400, "session id is required");
 
