@@ -104,14 +104,20 @@ const createAndSaveOrderFromSession = async (session) => {
     customer: new mongoose.Types.ObjectId(userId),
     orderItems: [],
     shippingAddress: {
-      fullname: session.shipping_details?.name || "",
+      fullname: session.collected_information?.shipping_details?.name || "",
       email: session.customer_details?.email || "",
-      street: session.shipping_details?.address?.line1 || "",
-      city: session.shipping_details?.address?.city || "",
-      state: session.shipping_details?.address?.state || "",
-      postalCode: session.shipping_details?.address?.postal_code || "",
-      country: session.shipping_details?.address?.country || "",
-      phoneNumber: session.customer_details?.phone || "",
+      street:
+        session.collected_information?.shipping_details?.address?.line1 || "",
+      city:
+        session.collected_information?.shipping_details?.address?.city || "",
+      state:
+        session.collected_information?.shipping_details?.address?.state || "",
+      postalCode:
+        session.collected_information?.shipping_details?.address?.postal_code ||
+        "",
+      country:
+        session.collected_information?.shipping_details?.address?.country || "",
+      phoneNumber: session.customer_details?.phone,
       //   fullname: session.shipping?.name || "",
       //   email: session.customer_details?.email || "",
       //   street: session.shipping?.address?.line1 || "",
@@ -247,7 +253,11 @@ const confirmCheckout = AsyncHandler(async (req, res) => {
 
   try {
     const session = await stripe.checkout.sessions.retrieve(session_id, {
-      expand: ["payment_intent", "customer_details", "shipping_details"],
+      expand: [
+        "payment_intent",
+        "customer_details",
+        "collected_information.shipping_details",
+      ],
     });
 
     if (session.payment_status !== "paid") {
