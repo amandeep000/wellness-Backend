@@ -141,7 +141,7 @@ const confirmCheckout = AsyncHandler(async (req, res) => {
       session.metadata.userId,
       session
     );
-    await Cart.updateOne({ userId: user._id }, { $set: { items: [] } });
+    await Cart.updateOne({ userId: req.user._id }, { $set: { items: [] } });
     return res
       .status(200)
       .json(new ApiResponse(200, orderData, "Payment confirmed"));
