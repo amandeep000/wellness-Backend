@@ -63,7 +63,7 @@ const createCheckoutSession = AsyncHandler(async (req, res) => {
   }
 });
 
-const createAndSaveOrderFromSession = AsyncHandler(async (session) => {
+const createAndSaveOrderFromSession = async (session) => {
   const existing = await Order.findOne({ orderId: session.id });
   if (existing) {
     console.log("Order already exists for session:", session.id);
@@ -201,7 +201,7 @@ const createAndSaveOrderFromSession = AsyncHandler(async (session) => {
 
   console.log("Order created from Stripe session:", newOrder._id.toString());
   return newOrder;
-});
+};
 
 const stripeWebhook = AsyncHandler(async (req, res) => {
   const sig = req.headers["stripe-signature"];
@@ -242,7 +242,7 @@ const stripeWebhook = AsyncHandler(async (req, res) => {
   res.status(200).json(200, { received: true });
 });
 
-const confirmCheckout = AsyncHandler(async (req, res, next) => {
+const confirmCheckout = AsyncHandler(async (req, res) => {
   const { session_id } = req.query;
   if (!session_id) throw new ApiError(400, "session id is required");
 
