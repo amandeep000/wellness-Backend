@@ -47,15 +47,12 @@ const orderSchema = new mongoose.Schema(
     paymentStatus: { type: String },
     paymentMethod: { type: String },
     paymentMethodDetails: {
-      type: String,
-      card: {
-        brand: String,
-        last4: String,
-        exp_month: Number,
-        exp_year: Number,
-        country: String,
-        funding: String,
-      },
+      brand: String,
+      last4: String,
+      exp_month: Number,
+      exp_year: Number,
+      country: String,
+      funding: String,
     },
 
     taxPrice: { type: Number, default: 0.0, required: true },
