@@ -247,7 +247,7 @@ const confirmCheckout = AsyncHandler(async (req, res) => {
 
   try {
     const session = await stripe.checkout.sessions.retrieve(session_id, {
-      expand: ["payment_intent", "customer_details", "shipping"],
+      expand: ["payment_intent", "customer_details", "shipping_details"],
     });
 
     if (session.payment_status !== "paid") {
