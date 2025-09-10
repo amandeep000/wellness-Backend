@@ -44,7 +44,11 @@ const createCheckoutSession = AsyncHandler(async (req, res) => {
     success_url: `${process.env.CLIENT_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.CLIENT_URL}/`,
   });
-
+  console.log(
+    "Stripe session created:",
+    session.id,
+    JSON.stringify(session.line_items, null, 2)
+  );
   res.json(new ApiResponse(200, { sessionId: session.id }));
 });
 
@@ -137,7 +141,7 @@ const confirmCheckout = AsyncHandler(async (req, res) => {
       session.metadata.userId,
       session
     );
-
+    await Cart.updateOne({ userId }, { $set: { items: [] } });
     return res
       .status(200)
       .json(new ApiResponse(200, orderData, "Payment confirmed"));
