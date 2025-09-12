@@ -5,34 +5,34 @@ import { ApiError } from "../utils/ApiError.utils.js";
 import { ApiResponse } from "../utils/ApiResponse.utils.js";
 import mongoose from "mongoose";
 
-const getAllOrders = AsyncHandler(async (req, res) => {
-  try {
-    const orders = await Order.find({})
-      .populate("customer", "name email")
-      .populate({
-        path: "orderItems",
-        select: "productName productImage productPrice productQuantity",
-      })
-      .sort({ createdAt: -1 });
+// const getAllOrders = AsyncHandler(async (req, res) => {
+//   try {
+//     const orders = await Order.find({})
+//       .populate("customer", "name email")
+//       .populate({
+//         path: "orderItems",
+//         select: "productName productImage productPrice productQuantity",
+//       })
+//       .sort({ createdAt: -1 });
 
-    if (!orders || orders.length === 0) {
-      return res.status(200).json(new ApiResponse(200, [], "No orders found"));
-    }
+//     if (!orders || orders.length === 0) {
+//       return res.status(200).json(new ApiResponse(200, [], "No orders found"));
+//     }
 
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          orders,
-          `${orders.length} orders retrieved successfully`
-        )
-      );
-  } catch (error) {
-    console.error("Error in getAllOrders:", error);
-    throw new ApiError(500, "Failed to retrieve orders");
-  }
-});
+//     return res
+//       .status(200)
+//       .json(
+//         new ApiResponse(
+//           200,
+//           orders,
+//           `${orders.length} orders retrieved successfully`
+//         )
+//       );
+//   } catch (error) {
+//     console.error("Error in getAllOrders:", error);
+//     throw new ApiError(500, "Failed to retrieve orders");
+//   }
+// });
 
 const getMyOrders = AsyncHandler(async (req, res) => {
   try {
@@ -73,144 +73,144 @@ const getMyOrders = AsyncHandler(async (req, res) => {
   }
 });
 
-const getOrderById = AsyncHandler(async (req, res) => {
-  try {
-    const { id } = req.params;
+// const getOrderById = AsyncHandler(async (req, res) => {
+//   try {
+//     const { id } = req.params;
 
-    if (!id) {
-      throw new ApiError(400, "Order ID is required");
-    }
+//     if (!id) {
+//       throw new ApiError(400, "Order ID is required");
+//     }
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw new ApiError(400, "Invalid order ID format");
-    }
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       throw new ApiError(400, "Invalid order ID format");
+//     }
 
-    const order = await Order.findById(id)
-      .populate("customer", "name email")
-      .populate({
-        path: "orderItems",
-        select: "productName productImage productPrice productQuantity",
-      });
+//     const order = await Order.findById(id)
+//       .populate("customer", "name email")
+//       .populate({
+//         path: "orderItems",
+//         select: "productName productImage productPrice productQuantity",
+//       });
 
-    if (!order) {
-      throw new ApiError(404, "Order not found");
-    }
+//     if (!order) {
+//       throw new ApiError(404, "Order not found");
+//     }
 
-    return res
-      .status(200)
-      .json(new ApiResponse(200, order, "Order retrieved successfully"));
-  } catch (error) {
-    console.error("Error in getOrderById:", error);
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    throw new ApiError(500, "Failed to retrieve order");
-  }
-});
+//     return res
+//       .status(200)
+//       .json(new ApiResponse(200, order, "Order retrieved successfully"));
+//   } catch (error) {
+//     console.error("Error in getOrderById:", error);
+//     if (error instanceof ApiError) {
+//       throw error;
+//     }
+//     throw new ApiError(500, "Failed to retrieve order");
+//   }
+// });
 
-const updateOrderStatus = AsyncHandler(async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { orderStatus } = req.body;
+// const updateOrderStatus = AsyncHandler(async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { orderStatus } = req.body;
 
-    if (!id) {
-      throw new ApiError(400, "Order ID is required");
-    }
+//     if (!id) {
+//       throw new ApiError(400, "Order ID is required");
+//     }
 
-    if (!orderStatus) {
-      throw new ApiError(400, "Order status is required");
-    }
+//     if (!orderStatus) {
+//       throw new ApiError(400, "Order status is required");
+//     }
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw new ApiError(400, "Invalid order ID format");
-    }
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       throw new ApiError(400, "Invalid order ID format");
+//     }
 
-    const validStatuses = [
-      "pending",
-      "processing",
-      "shipping",
-      "delivered",
-      "cancelled",
-    ];
+//     const validStatuses = [
+//       "pending",
+//       "processing",
+//       "shipping",
+//       "delivered",
+//       "cancelled",
+//     ];
 
-    if (!validStatuses.includes(orderStatus.toLowerCase())) {
-      throw new ApiError(
-        400,
-        `Invalid order status. Valid statuses are: ${validStatuses.join(", ")}`
-      );
-    }
+//     if (!validStatuses.includes(orderStatus.toLowerCase())) {
+//       throw new ApiError(
+//         400,
+//         `Invalid order status. Valid statuses are: ${validStatuses.join(", ")}`
+//       );
+//     }
 
-    const updateData = {
-      orderStatus: orderStatus.toLowerCase(),
-      updatedAt: new Date(),
-    };
+//     const updateData = {
+//       orderStatus: orderStatus.toLowerCase(),
+//       updatedAt: new Date(),
+//     };
 
-    if (orderStatus.toLowerCase() === "delivered") {
-      updateData.deliveredAt = new Date();
-    }
+//     if (orderStatus.toLowerCase() === "delivered") {
+//       updateData.deliveredAt = new Date();
+//     }
 
-    const order = await Order.findByIdAndUpdate(id, updateData, {
-      new: true,
-      runValidators: true,
-    })
-      .populate("customer", "name email")
-      .populate({
-        path: "orderItems",
-        select: "productName productImage productPrice productQuantity",
-      });
+//     const order = await Order.findByIdAndUpdate(id, updateData, {
+//       new: true,
+//       runValidators: true,
+//     })
+//       .populate("customer", "name email")
+//       .populate({
+//         path: "orderItems",
+//         select: "productName productImage productPrice productQuantity",
+//       });
 
-    if (!order) {
-      throw new ApiError(404, "Order not found");
-    }
+//     if (!order) {
+//       throw new ApiError(404, "Order not found");
+//     }
 
-    return res
-      .status(200)
-      .json(new ApiResponse(200, order, "Order status updated successfully"));
-  } catch (error) {
-    console.error("Error in updateOrderStatus:", error);
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    throw new ApiError(500, "Failed to update order status");
-  }
-});
+//     return res
+//       .status(200)
+//       .json(new ApiResponse(200, order, "Order status updated successfully"));
+//   } catch (error) {
+//     console.error("Error in updateOrderStatus:", error);
+//     if (error instanceof ApiError) {
+//       throw error;
+//     }
+//     throw new ApiError(500, "Failed to update order status");
+//   }
+// });
 
-const getCustomerOrders = AsyncHandler(async (req, res) => {
-  try {
-    const { customerId } = req.params;
+// const getCustomerOrders = AsyncHandler(async (req, res) => {
+//   try {
+//     const { customerId } = req.params;
 
-    if (!customerId) {
-      throw new ApiError(400, "Customer ID is required");
-    }
+//     if (!customerId) {
+//       throw new ApiError(400, "Customer ID is required");
+//     }
 
-    if (!mongoose.Types.ObjectId.isValid(customerId)) {
-      throw new ApiError(400, "Invalid customer ID format");
-    }
+//     if (!mongoose.Types.ObjectId.isValid(customerId)) {
+//       throw new ApiError(400, "Invalid customer ID format");
+//     }
 
-    const orders = await Order.find({ customer: customerId })
-      .populate({
-        path: "orderItems",
-        select: "productName productImage productPrice productQuantity",
-      })
-      .sort({ createdAt: -1 });
+//     const orders = await Order.find({ customer: customerId })
+//       .populate({
+//         path: "orderItems",
+//         select: "productName productImage productPrice productQuantity",
+//       })
+//       .sort({ createdAt: -1 });
 
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          orders || [],
-          `${orders?.length || 0} orders retrieved successfully`
-        )
-      );
-  } catch (error) {
-    console.error("Error in getCustomerOrders:", error);
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    throw new ApiError(500, "Failed to retrieve customer orders");
-  }
-});
+//     return res
+//       .status(200)
+//       .json(
+//         new ApiResponse(
+//           200,
+//           orders || [],
+//           `${orders?.length || 0} orders retrieved successfully`
+//         )
+//       );
+//   } catch (error) {
+//     console.error("Error in getCustomerOrders:", error);
+//     if (error instanceof ApiError) {
+//       throw error;
+//     }
+//     throw new ApiError(500, "Failed to retrieve customer orders");
+//   }
+// });
 
 export {
   getAllOrders,
