@@ -42,10 +42,7 @@ const getMyOrders = AsyncHandler(async (req, res) => {
       throw new ApiError(401, "User not authenticated");
     }
 
-    if (!new mongoose.Types.ObjectId.isValid(userId)) {
-      throw new ApiError(400, "Invalid user ID");
-    }
-
+    // Let MongoDB handle the ObjectId validation
     const orders = await Order.find({ customer: userId })
       .populate({
         path: "orderItems",
@@ -66,6 +63,12 @@ const getMyOrders = AsyncHandler(async (req, res) => {
       );
   } catch (error) {
     console.error("Error in getMyOrders:", error);
+
+    // Handle MongoDB CastError (invalid ObjectId)
+    if (error.name === "CastError" && error.path === "_id") {
+      throw new ApiError(400, "Invalid user ID format");
+    }
+
     if (error instanceof ApiError) {
       throw error;
     }
