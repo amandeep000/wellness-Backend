@@ -9,6 +9,10 @@ import Product from "../models/product.models.js";
 import mongoose from "mongoose";
 import bodyParser from "body-parser";
 
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2025-07-30.basil",
+});
+
 const createCheckoutSession = AsyncHandler(async (req, res) => {
   try {
     const cart = await Cart.findOne({ userId: req.user._id }).populate(
