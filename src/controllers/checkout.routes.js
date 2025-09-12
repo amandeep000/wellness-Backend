@@ -9,9 +9,7 @@ import Product from "../models/product.models.js";
 import mongoose from "mongoose";
 import bodyParser from "body-parser";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-07-30.basil",
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const createCheckoutSession = AsyncHandler(async (req, res) => {
   try {
@@ -60,7 +58,7 @@ const createCheckoutSession = AsyncHandler(async (req, res) => {
       );
   } catch (error) {
     console.error("stripe session error", error);
-    throw new ApiError(500, "Error creating checkout session");
+    throw new ApiError(500, error.message);
   }
 });
 
