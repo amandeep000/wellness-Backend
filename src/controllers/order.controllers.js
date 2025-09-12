@@ -3,6 +3,7 @@ import OrderItem from "../models/orderItem.models.js";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.utils.js";
 import { ApiResponse } from "../utils/ApiResponse.utils.js";
+import mongoose from "mongoose";
 
 const getAllOrders = AsyncHandler(async (req, res) => {
   try {
@@ -41,7 +42,7 @@ const getMyOrders = AsyncHandler(async (req, res) => {
       throw new ApiError(401, "User not authenticated");
     }
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
+    if (!new mongoose.Types.ObjectId.isValid(userId)) {
       throw new ApiError(400, "Invalid user ID");
     }
 
