@@ -37,8 +37,10 @@ const getMyOrders = AsyncHandler(async (req, res) => {
       select: "productName productImage productPrice productQuantity",
     })
     .sort({ createdAt: -1 });
-  if (!orders) {
-    throw new ApiError(404, "NO orders were found for the user");
+  if (!orders || orders.length === 0) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, [], "No orders found for the user!"));
   }
   return res
     .status(200)
