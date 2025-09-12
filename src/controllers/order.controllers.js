@@ -212,13 +212,7 @@ const getMyOrders = AsyncHandler(async (req, res) => {
 //   }
 // });
 
-export {
-  getAllOrders,
-  getMyOrders,
-  getOrderById,
-  updateOrderStatus,
-  getCustomerOrders,
-};
+export { getMyOrders };
 
 // const getAllOrders = AsyncHandler(async (req, res) => {
 //   const orders = await Order.find({})
