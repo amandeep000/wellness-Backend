@@ -9,8 +9,11 @@ import { router as productRouter } from "./routes/product.routes.js";
 import { router as cartRouter } from "./routes/cart.routes.js";
 import { router as checkoutRouter } from "./routes/checkout.routes.js";
 import { router as orderRouter } from "./routes/order.routes.js";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 
 const app = express();
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(
   cors({
     origin: [process.env.CORS_ORIGIN, "http://localhost:5173"],
@@ -20,10 +23,17 @@ app.use(
   })
 );
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 100,
+  max: 100,
+  message: "Too many requests, Please try again later.",
+});
+
 // global middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(limiter);
 // app.use(express.static())
 
 // api routes
