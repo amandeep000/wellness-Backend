@@ -10,7 +10,7 @@ import {
 const router = Router();
 
 router.route("/me").get(verifyJWT, getCurrentUser);
-router.route("/profile").put(verifyJWT, updateProfile);
+router.route("/profile").put(updateProfile);
 router
   .route("/profile/avatar")
   .put(verifyJWT, upload.single("avatar"), updateAvatar);
