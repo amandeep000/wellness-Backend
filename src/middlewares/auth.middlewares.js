@@ -8,7 +8,7 @@ const verifyJWT = AsyncHandler(async (req, res, next) => {
   const token =
     req.cookies.accessToken ||
     req.header("Authorization")?.replace("Bearer ", "").trim();
-
+  console.log("This is the token from req: ", token);
   if (!token) {
     throw new ApiError(401, "Unauthorised or invalid token");
   }
@@ -24,6 +24,7 @@ const verifyJWT = AsyncHandler(async (req, res, next) => {
   if (!user) {
     throw new ApiError(404, "user not found");
   }
+  console.log("This is the decoded token: ", decodedToken);
   req.user = user;
   next();
 });

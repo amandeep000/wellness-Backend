@@ -44,5 +44,6 @@ app.use("/api/v1/products", productRouter);
 app.use("/api/v1/cart", cartRouter);
 app.use("/api/v1/checkout", checkoutRouter);
 app.use("/api/v1/orders", orderRouter);
+// app.use("/api/v1/addProduct");
 app.use(errorHandler);
 export default app;
