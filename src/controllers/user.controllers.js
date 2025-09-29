@@ -14,10 +14,7 @@ const createAccessAndRefreshToken = AsyncHandler(async (userId) => {
   try {
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
-    console.log("📝 Access Token Type:", typeof accessToken);
-    console.log("📝 Access Token:", accessToken);
-    console.log("🔄 Refresh Token Type:", typeof refreshToken);
-    console.log("🔄 Refresh Token:", refreshToken);
+
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
     return { accessToken, refreshToken };
