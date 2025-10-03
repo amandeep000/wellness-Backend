@@ -9,6 +9,7 @@ import { router as productRouter } from "./routes/product.routes.js";
 import { router as cartRouter } from "./routes/cart.routes.js";
 import { router as checkoutRouter } from "./routes/checkout.routes.js";
 import { router as orderRouter } from "./routes/order.routes.js";
+import { router as productAdminRouter } from "./routes/addProducts.routes.js";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 
@@ -44,6 +45,6 @@ app.use("/api/v1/products", productRouter);
 app.use("/api/v1/cart", cartRouter);
 app.use("/api/v1/checkout", checkoutRouter);
 app.use("/api/v1/orders", orderRouter);
-// app.use("/api/v1/addProduct");
+app.use("/api/v1/addProduct", productAdminRouter);
 app.use(errorHandler);
 export default app;

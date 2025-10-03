@@ -16,8 +16,8 @@ const productSchema = new mongoose.Schema(
     },
     stock: {
       type: Number,
-      default: 0,
-      min: 0,
+      default: 100,
+      min: 1,
     },
     slug: { type: String, unique: true, lowercase: true },
     tags: [{ type: String }],
