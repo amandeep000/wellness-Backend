@@ -14,6 +14,7 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 
 const app = express();
+app.set("trust proxy", 1);
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(
   cors({
